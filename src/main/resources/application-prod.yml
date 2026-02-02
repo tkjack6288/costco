@@ -1,0 +1,52 @@
+# ==============================================
+# Production Configuration (Cloud Run)
+# ==============================================
+
+spring:
+  cloud:
+    gcp:
+      firestore:
+        project-id: ${GCP_PROJECT_ID}
+
+# Server configuration
+server:
+  port: ${PORT:8080}
+
+# Production scraper settings
+scraper:
+  base-url: https://www.costco.com.tw
+  delay:
+    min-ms: 3000
+    max-ms: 5000
+  page:
+    max-pages: 100
+  timeout:
+    page-load-seconds: 60
+    element-wait-seconds: 15
+  schedule:
+    cron: "0 0 3 * * *"
+
+# Selenium configuration - always headless in production
+selenium:
+  headless: true
+  window-size: 1920x1080
+
+# Production logging
+logging:
+  level:
+    root: INFO
+    com.costco.scraper: INFO
+    org.springframework.web: WARN
+    org.openqa.selenium: ERROR
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Actuator - limit exposed endpoints in production
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized

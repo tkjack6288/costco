@@ -1,0 +1,42 @@
+# ==============================================
+# Local Development Configuration
+# ==============================================
+
+spring:
+  cloud:
+    gcp:
+      firestore:
+        project-id: ${GCP_PROJECT_ID:your-project-id}
+
+# Server configuration
+server:
+  port: ${PORT:8080}
+
+# Override scraper settings for local testing
+scraper:
+  base-url: https://www.costco.com.tw
+  delay:
+    min-ms: 1000
+    max-ms: 2000
+  page:
+    max-pages: 5
+  timeout:
+    page-load-seconds: 30
+    element-wait-seconds: 10
+  schedule:
+    cron: "0 0 3 * * *"
+
+# Selenium configuration - non-headless for debugging
+selenium:
+  headless: ${SELENIUM_HEADLESS:false}
+  window-size: 1920x1080
+
+# More verbose logging for development
+logging:
+  level:
+    root: INFO
+    com.costco.scraper: DEBUG
+    org.springframework.web: DEBUG
+    org.openqa.selenium: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

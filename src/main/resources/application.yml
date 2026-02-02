@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: costco-scraper
+  cloud:
+    gcp:
+      firestore:
+        project-id: ${GCP_PROJECT_ID:your-project-id}
+
+# Server configuration
+server:
+  port: ${PORT:8080}
+
+# Actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+# Scraper configuration
+scraper:
+  base-url: https://www.costco.com.tw
+  categories:
+    - path: /c/all-categories
+      name: All Categories
+  delay:
+    min-ms: 3000
+    max-ms: 5000
+  page:
+    max-pages: 100
+  timeout:
+    page-load-seconds: 30
+    element-wait-seconds: 10
+
+# Selenium configuration
+selenium:
+  headless: true
+  window-size: 1920x1080
+  user-agents:
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15"
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.costco.scraper: DEBUG
+    org.springframework.web: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
