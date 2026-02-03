@@ -7,8 +7,8 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.WriteBatch;
 import com.google.cloud.firestore.WriteResult;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -20,18 +20,35 @@ import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class FirestoreService {
 
     private final Firestore firestore;
 
     private static final String COLLECTION_NAME = "products";
-    private static final int BATCH_SIZE = 500; // Firestore batch limit
+    private static final int BATCH_SIZE = 500;
+
+    @Autowired(required = false)
+    public FirestoreService(Firestore firestore) {
+        this.firestore = firestore;
+        if (firestore == null) {
+            log.warn("Firestore not available - data persistence disabled");
+        }
+    }
+
+    private boolean isAvailable() {
+        if (firestore == null) {
+            log.warn("Firestore not configured");
+            return false;
+        }
+        return true;
+    }
 
     /**
      * Save or update a single product
      */
     public void saveProduct(Product product) {
+        if (!isAvailable()) return;
+
         try {
             product.setUpdatedAt(Instant.now());
             if (product.getScrapedAt() == null) {
@@ -41,14 +58,11 @@ public class FirestoreService {
             DocumentReference docRef = firestore.collection(COLLECTION_NAME)
                     .document(product.getProductId());
 
-            // Check if document exists for incremental update
             DocumentSnapshot snapshot = docRef.get().get();
             if (snapshot.exists()) {
-                // Update existing document
                 docRef.set(productToMap(product)).get();
                 log.debug("Updated product: {}", product.getProductId());
             } else {
-                // Create new document
                 docRef.set(productToMap(product)).get();
                 log.debug("Created product: {}", product.getProductId());
             }
@@ -62,6 +76,12 @@ public class FirestoreService {
      * Save multiple products in batches
      */
     public void saveProducts(List<Product> products) {
+        if (!isAvailable()) {
+            log.info("Skipping save - Firestore not available. Would have saved {} products",
+                    products != null ? products.size() : 0);
+            return;
+        }
+
         if (products == null || products.isEmpty()) {
             log.warn("No products to save");
             return;
@@ -70,7 +90,6 @@ public class FirestoreService {
         log.info("Saving {} products to Firestore", products.size());
         Instant now = Instant.now();
 
-        // Process in batches
         List<List<Product>> batches = partitionList(products, BATCH_SIZE);
         int batchNumber = 0;
 
@@ -90,7 +109,6 @@ public class FirestoreService {
                     writeBatch.set(docRef, productToMap(product));
                 }
 
-                // Commit the batch
                 ApiFuture<List<WriteResult>> future = writeBatch.commit();
                 List<WriteResult> results = future.get();
                 log.info("Batch {}/{} committed: {} documents", batchNumber, batches.size(), results.size());
@@ -108,6 +126,8 @@ public class FirestoreService {
      * Get a product by ID
      */
     public Product getProduct(String productId) {
+        if (!isAvailable()) return null;
+
         try {
             DocumentSnapshot snapshot = firestore.collection(COLLECTION_NAME)
                     .document(productId)
@@ -128,6 +148,8 @@ public class FirestoreService {
      * Check if a product exists
      */
     public boolean productExists(String productId) {
+        if (!isAvailable()) return false;
+
         try {
             DocumentSnapshot snapshot = firestore.collection(COLLECTION_NAME)
                     .document(productId)
@@ -145,6 +167,8 @@ public class FirestoreService {
      * Delete a product
      */
     public void deleteProduct(String productId) {
+        if (!isAvailable()) return;
+
         try {
             firestore.collection(COLLECTION_NAME)
                     .document(productId)
@@ -161,6 +185,8 @@ public class FirestoreService {
      * Get count of all products
      */
     public long getProductCount() {
+        if (!isAvailable()) return 0;
+
         try {
             return firestore.collection(COLLECTION_NAME)
                     .get()

@@ -1,10 +1,12 @@
 spring:
   application:
     name: costco-scraper
+  main:
+    allow-bean-definition-overriding: true
   cloud:
     gcp:
       firestore:
-        project-id: ${GCP_PROJECT_ID:your-project-id}
+        project-id: ${GCP_PROJECT_ID:}
 
 # Server configuration
 server:

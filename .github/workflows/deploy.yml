@@ -64,7 +64,9 @@ jobs:
             --timeout 3600 \
             --min-instances 0 \
             --max-instances 1 \
-            --set-env-vars "GCP_PROJECT_ID=${{ env.PROJECT_ID }}" \
+            --port 8080 \
+            --cpu-boost \
+            --set-env-vars "GCP_PROJECT_ID=${{ env.PROJECT_ID }},SPRING_PROFILES_ACTIVE=prod" \
             --allow-unauthenticated
 
       - name: Get Cloud Run URL
